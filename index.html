@@ -80,9 +80,14 @@ button,input{font:inherit}.shell{max-width:1180px;margin:auto;padding:22px}.top{
  <div id="authBox" class="panel auth">
   <h2>Player Account</h2><p class="muted">Use one account for games, lesson progress, and future rankings.</p>
   <div class="stack"><input id="displayName" placeholder="Display name"/><input id="email" type="email" placeholder="Email"/><input id="password" type="password" placeholder="Password (6+ characters)"/>
-  <div style="display:flex;gap:8px"><button class="primary" onclick="signIn()">Sign In</button><button class="ghost" onclick="signUp()">Create Account</button></div><div id="authMsg" class="msg"></div></div>
+  <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="primary" onclick="signIn()">Sign In</button><button class="ghost" onclick="signUp()">Create Account</button><button class="ghost" onclick="forgotPassword()">Forgot Password?</button></div><div id="authMsg" class="msg" aria-live="polite"></div></div>
  </div>
- <div id="profileBox" class="panel hidden"><div class="section-title"><div><h2 id="profileName">Player</h2><p id="profileEmail"></p></div><button class="danger" onclick="signOut()">Sign Out</button></div>
+ <div id="resetBox" class="panel auth hidden">
+  <h2>Reset Password</h2><p class="muted">Enter a new password for your EAV Chess account.</p>
+  <div class="stack"><input id="newPassword" type="password" placeholder="New password (8+ characters)"/><input id="confirmNewPassword" type="password" placeholder="Confirm new password"/>
+  <button class="primary" onclick="saveNewPassword()">Set New Password</button><div id="resetMsg" class="msg" aria-live="polite"></div></div>
+ </div>
+ <div id="profileBox" class="panel hidden"><div class="section-title"><div><h2 id="profileName">Player</h2><p id="profileEmail"></p></div><button class="danger" onclick="signOut()">Sign Out</button></div><div id="profileMsg" class="msg" aria-live="polite"></div>
  <div class="statgrid"><div class="stat"><strong id="rating">1200</strong><span>Rating</span></div><div class="stat"><strong id="xpTotal">0</strong><span>XP • Level <span id="playerLevel">1</span></span></div><div class="stat"><strong id="completed">0</strong><span>Lessons completed</span></div><div class="stat"><strong id="record">0-0-0</strong><span>W-L-D</span></div></div></div>
 </section>
 </main>
@@ -93,7 +98,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.4";
 import { Chess } from "https://esm.sh/chess.js@1.4.0";
 
 const sb = createClient("https://nkwpiomisohzvomcshrq.supabase.co","sb_publishable_7hDgGTzFhC2msWXF_c9Cfg_hLXMkz6n");
-let user=null, profile=null, lessons=[], progress=[], game=null, chess=null, selected=null, poller=null;
+let user=null, profile=null, lessons=[], progress=[], game=null, chess=null, selected=null, poller=null, recoveryMode=false;
 let lessonSteps=[], lessonStepIndex=0, lessonChess=null, lessonSelected=null, lessonCompletions=new Set(), activeLesson=null;
 const pieces={p:"♟",r:"♜",n:"♞",b:"♝",q:"♛",k:"♚"};
 
@@ -105,13 +110,37 @@ async function refreshAuth(){const {data:{user:u}}=await sb.auth.getUser();user=
 async function ensureProfile(){let {data:p}=await sb.from("chess_profiles").select("*").eq("user_id",user.id).maybeSingle();if(!p){const name=(user.user_metadata?.display_name||user.email?.split("@")[0]||"Player").slice(0,40);const {data:n}=await sb.from("chess_profiles").insert({user_id:user.id,display_name:name}).select().single();p=n;}profile=p;await loadProgress();}
 function renderAuth(){
  document.getElementById("playLoggedOut").classList.toggle("hidden",!!user);document.getElementById("lobby").classList.toggle("hidden",!user);
- document.getElementById("authBox").classList.toggle("hidden",!!user);document.getElementById("profileBox").classList.toggle("hidden",!user);
+ document.getElementById("authBox").classList.toggle("hidden",!!user||recoveryMode);
+ document.getElementById("resetBox").classList.toggle("hidden",!recoveryMode);
+ document.getElementById("profileBox").classList.toggle("hidden",!user||recoveryMode);
  if(user&&profile){profileName.textContent=profile.display_name;profileEmail.textContent=user.email||"";rating.textContent=profile.rating;xpTotal.textContent=profile.xp||0;playerLevel.textContent=profile.level||1;completed.textContent=progress.filter(x=>x.status==="completed").length;record.textContent=profile.wins+"-"+profile.losses+"-"+profile.draws;}
 }
 window.signUp=async()=>{const name=displayName.value.trim(),em=email.value.trim(),pw=password.value;if(!name||!em||pw.length<6)return msg("authMsg","Enter a display name, email, and password of at least 6 characters.","err");const {data,error}=await sb.auth.signUp({email:em,password:pw,options:{data:{display_name:name}}});if(error)return msg("authMsg",error.message,"err");msg("authMsg",data.session?"Account created.":"Account created. Check your email if confirmation is required.","ok");await refreshAuth();};
 window.signIn=async()=>{const {error}=await sb.auth.signInWithPassword({email:email.value.trim(),password:password.value});if(error)return msg("authMsg",error.message,"err");msg("authMsg","Signed in.","ok");await refreshAuth();};
-window.signOut=async()=>{await sb.auth.signOut();user=null;profile=null;progress=[];renderAuth();};
-sb.auth.onAuthStateChange(()=>setTimeout(refreshAuth,0));
+window.forgotPassword=async()=>{
+ const em=email.value.trim();
+ if(!em)return msg("authMsg","Enter your email address first, then tap Forgot Password.","err");
+ msg("authMsg","Sending password reset email…");
+ const {error}=await sb.auth.resetPasswordForEmail(em,{redirectTo:"https://eav-chess.netlify.app/"});
+ if(error)return msg("authMsg",error.message,"err");
+ msg("authMsg","If an EAV Chess account exists for that email, a password reset link has been sent. Check your inbox and spam folder.","ok");
+};
+window.saveNewPassword=async()=>{
+ const pw=newPassword.value,confirm=confirmNewPassword.value;
+ if(pw.length<8)return msg("resetMsg","Use a password with at least 8 characters.","err");
+ if(pw!==confirm)return msg("resetMsg","The passwords do not match.","err");
+ msg("resetMsg","Updating password…");
+ const {error}=await sb.auth.updateUser({password:pw});
+ if(error)return msg("resetMsg",error.message,"err");
+ recoveryMode=false;
+ await refreshAuth();
+ const status=document.getElementById("profileMsg");if(status){status.textContent="Password updated successfully.";status.className="msg ok";}
+};
+window.signOut=async()=>{await sb.auth.signOut();user=null;profile=null;progress=[];recoveryMode=false;renderAuth();};
+sb.auth.onAuthStateChange((event)=>{
+ if(event==="PASSWORD_RECOVERY"){recoveryMode=true;go("profile");setTimeout(()=>{renderAuth();const el=document.getElementById("newPassword");if(el)el.focus();},0);return;}
+ setTimeout(refreshAuth,0);
+});
 
 async function loadLessons(){const {data}=await sb.from("chess_lessons").select("*").order("sort_order");lessons=data||[];lessonCount.textContent=lessons.length;lessonsEl.innerHTML="";lessons.forEach(l=>{const done=progress.some(p=>p.lesson_id===l.id&&p.status==="completed");const d=document.createElement("div");d.className="card lesson-card";d.innerHTML='<span class="tag">'+l.level+'</span><span class="tag">'+l.module+'</span><h3 style="margin-top:10px">'+l.title+'</h3><p class="muted">'+l.summary+'</p><b class="'+(done?"ok":"muted")+'">'+(done?"✓ Completed":"Open Lesson →")+'</b>';d.onclick=()=>openLesson(l);lessonsEl.appendChild(d);});renderProgress();}
 const lessonsEl=document.getElementById("lessons");
