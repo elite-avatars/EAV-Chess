@@ -55,7 +55,8 @@ button,input,select{font:inherit}.shell{max-width:1180px;margin:auto;padding:22p
  <div class="section-title"><div><h2>Play Chess</h2><p>Choose your board style, then play.</p></div></div>
  <div class="panel" style="margin-bottom:18px"><div class="grid2"><div><h3>Board & Pieces Style</h3><p class="muted">Your theme changes how the board and pieces look on your screen. It does not change the game rules.</p></div><div class="stack"><select id="quickThemeSelect" class="theme-select" onchange="previewTheme(this.value)"></select><button class="ghost" onclick="saveCurrentTheme()">Save as My Default</button><div id="themeQuickMsg" class="msg"></div></div></div></div>
  <div class="panel" style="margin-bottom:18px"><h3>Board Experience</h3><p class="muted">Switch views anytime during a game. The match and legal moves stay exactly the same.</p><div class="view-mode"><button class="ghost" data-board-mode="2d" onclick="setBoardMode('2d')">Classic 2-D</button><button class="ghost" data-board-mode="table" onclick="setBoardMode('table')">3-D Table</button><button class="ghost" data-board-mode="arena" onclick="setBoardMode('arena')">EAV Floating Arena</button></div></div>
- <div id="playLoggedOut" class="panel"><h3>Sign in to play</h3><p class="muted">Player accounts are required for multiplayer games and progress tracking.</p><button class="primary" onclick="go('profile')">Sign In / Create Account</button></div>
+ <div class="panel" style="margin-bottom:18px"><div class="grid2"><div><h3>Play the Computer</h3><p class="muted">Start a solo practice game instantly. You play White and the EAV computer plays Black. No sign-in is required.</p></div><div class="stack"><select id="computerDifficulty" class="theme-select"><option value="beginner">Beginner</option><option value="intermediate" selected>Intermediate</option><option value="advanced">Advanced Practice</option></select><button class="primary" onclick="startComputerGame()">Play the Computer</button></div></div></div>
+ <div id="playLoggedOut" class="panel"><h3>Sign in for multiplayer</h3><p class="muted">You can play the computer without signing in. Sign in only when you want private friend games and saved account progress.</p><button class="primary" onclick="go('profile')">Sign In / Create Account</button></div>
  <div id="lobby" class="grid2 hidden">
   <div class="panel"><h3>Play a Friend</h3><p class="muted">Start a private 1-on-1 game. EAV Chess will create a private code that one friend can use to join your game.</p><button class="primary" onclick="createGame()">Create Private Code</button><div id="createdCode" style="margin-top:14px"></div></div>
   <div class="panel"><h3>Join a Friend</h3><p class="muted">Enter the private code your friend sent you. Each code is for one head-to-head game.</p><div class="stack"><input id="joinCode" placeholder="Private game code"/><button class="primary" onclick="joinGame()">Join Friend</button></div><div id="joinMsg" class="msg"></div></div>
@@ -105,7 +106,7 @@ import { EAV3DRenderer } from "./eav-3d.js";
 
 const sb = createClient("https://nkwpiomisohzvomcshrq.supabase.co","sb_publishable_7hDgGTzFhC2msWXF_c9Cfg_hLXMkz6n");
 let user=null, profile=null, lessons=[], progress=[], game=null, chess=null, selected=null, poller=null, recoveryMode=false;
-let boardMode=localStorage.getItem("eavChessBoardMode")||"2d",renderer3D=null;
+let boardMode=localStorage.getItem("eavChessBoardMode")||"2d",renderer3D=null,computerThinking=false,localMoves=[];
 let lessonSteps=[], lessonStepIndex=0, lessonChess=null, lessonSelected=null, lessonCompletions=new Set(), activeLesson=null;
 const pieces={p:"♟",r:"♜",n:"♞",b:"♝",q:"♛",k:"♚"};
 const THEMES=[
@@ -264,17 +265,63 @@ async function submitLessonAnswer(answer){
  const next=document.getElementById("nextLessonStep");if(next)next.onclick=async()=>{if(lessonStepIndex<lessonSteps.length-1){lessonStepIndex++;renderLessonStep()}else{await loadProgress();await ensureProfile();await loadLessons();lessonPlayer.innerHTML='<div class="lesson-step"><span class="xp-pill">'+(profile?.xp||0)+' Total XP • Level '+(profile?.level||1)+'</span><h2>'+activeLesson.title+' Complete</h2><p>You finished this EAV interactive chess lesson. Review the explanation from any step you missed and apply the skill in your next game.</p><button class="primary" id="backLessons">Back to Lessons</button></div>';document.getElementById("backLessons").onclick=()=>{lessonPlayer.classList.add("hidden");loadLessons()}}};
 }
 async function loadVideos(){const {data}=await sb.from("chess_videos").select("*,chess_lessons(title)").order("sort_order");videoGrid.innerHTML="";if(!data?.length){["Opening Principles","Understanding Gambits","Ruy Lopez Plans","Sicilian Defense Map","Queen’s Gambit Structures","Master vs Amateur Thinking"].forEach(t=>{const d=document.createElement("div");d.className="card";d.innerHTML='<div class="video">EAV VIDEO<br><small>'+t+'<br>Video slot ready</small></div><h3>'+t+'</h3><p class="muted">Upload or link an EAV lesson video here.</p>';videoGrid.appendChild(d)});return;}data.forEach(v=>{const d=document.createElement("div");d.className="card";d.innerHTML=v.video_url?'<div class="video"><a style="color:var(--gold)" target="_blank" href="'+v.video_url+'">Watch Video</a></div>':'<div class="video">Video coming soon</div>';d.innerHTML+='<h3>'+v.title+'</h3><p class="muted">'+(v.description||"")+'</p>';videoGrid.appendChild(d)});}
+const computerPieceValue={p:100,n:320,b:330,r:500,q:900,k:20000};
+function evaluateComputerPosition(position){
+ let score=0;
+ for(let r=1;r<=8;r++)for(const f of ["a","b","c","d","e","f","g","h"]){const p=position.get(f+r);if(p)score+=(p.color==="b"?1:-1)*computerPieceValue[p.type]}
+ return score;
+}
+function chooseComputerMove(){
+ const moves=chess.moves({verbose:true});if(!moves.length)return null;
+ const difficulty=document.getElementById("computerDifficulty")?.value||"intermediate";
+ if(difficulty==="beginner")return moves[Math.floor(Math.random()*moves.length)];
+ let best=[],bestScore=-Infinity;
+ for(const m of moves){
+   const test=new Chess(chess.fen());test.move(m);
+   let score=evaluateComputerPosition(test);
+   if(m.captured)score+=computerPieceValue[m.captured]*.45;
+   if(test.inCheck())score+=35;
+   if(difficulty==="advanced"){
+     const replies=test.moves({verbose:true});
+     let worst=Infinity;
+     for(const reply of replies.slice(0,28)){const t2=new Chess(test.fen());t2.move(reply);let s=evaluateComputerPosition(t2);if(reply.captured)s-=computerPieceValue[reply.captured]*.35;worst=Math.min(worst,s)}
+     if(Number.isFinite(worst))score=worst;
+   }
+   if(score>bestScore+0.01){bestScore=score;best=[m]}else if(Math.abs(score-bestScore)<0.01)best.push(m);
+ }
+ return best[Math.floor(Math.random()*best.length)];
+}
+function localGameStatus(){
+ if(chess.isCheckmate())return chess.turn()==="w"?"Computer wins by checkmate.":"You win by checkmate.";
+ if(chess.isDraw())return "Draw.";
+ if(chess.inCheck())return (chess.turn()==="w"?"You are":"Computer is")+" in check.";
+ return chess.turn()==="w"?"Your move.":"Computer thinking…";
+}
+window.startComputerGame=()=>{
+ clearInterval(poller);if(renderer3D){renderer3D.destroy();renderer3D=null}
+ chess=new Chess();selected=null;localMoves=[];computerThinking=false;
+ game={id:"local-computer",white_id:"local-player",black_id:"computer",status:"active",turn:"white",invite_code:"SOLO",local:true,result:null};
+ lobby.classList.add("hidden");playLoggedOut.classList.add("hidden");gameArea.classList.remove("hidden");updateBoardModeButtons();renderBoard();loadMoves();
+};
+async function makeComputerMove(){
+ if(!game?.local||computerThinking||chess.isGameOver())return;
+ computerThinking=true;renderBoard();
+ await new Promise(r=>setTimeout(r,450));
+ const move=chooseComputerMove();
+ if(move){const made=chess.move(move);localMoves.push(made);game.turn=chess.turn()==="w"?"white":"black";if(chess.isGameOver()){game.status="finished";game.result=localGameStatus()}}
+ computerThinking=false;selected=null;renderBoard();loadMoves();
+}
 window.copyPrivateCode=async(code)=>{const confirm=document.getElementById("copyCodeConfirm");try{if(navigator.clipboard&&window.isSecureContext){await navigator.clipboard.writeText(code)}else{const ta=document.createElement("textarea");ta.value=code;ta.setAttribute("readonly","");ta.style.position="absolute";ta.style.left="-9999px";document.body.appendChild(ta);ta.select();document.execCommand("copy");ta.remove()}if(confirm){confirm.textContent="Copied!";confirm.className="msg ok";setTimeout(()=>{confirm.textContent="";confirm.className="msg"},1800)}}catch(e){if(confirm){confirm.textContent="Could not copy. Press and hold the code to copy it.";confirm.className="msg err"}}};
 window.createGame=async()=>{const {data,error}=await sb.from("chess_games").insert({white_id:user.id}).select().single();if(error)return createdCode.textContent=error.message;game=data;createdCode.innerHTML='<div class="card"><span class="muted">Private game code</span><div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:6px"><div style="font-size:32px;font-weight:800;color:var(--gold);letter-spacing:.15em">'+game.invite_code+'</div><button class="ghost" onclick="copyPrivateCode(\''+game.invite_code+'\')">Copy Code</button></div><div id="copyCodeConfirm" class="msg" aria-live="polite"></div><small>Send this code to one friend. Waiting for them to join…</small></div>';startGamePolling(game.id);};
 window.joinGame=async()=>{const code=joinCode.value.trim().toUpperCase();const {data:g,error}=await sb.from("chess_games").select("*").eq("invite_code",code).eq("status","waiting").maybeSingle();if(error||!g)return msg("joinMsg","Open challenge not found.","err");if(g.white_id===user.id)return msg("joinMsg","That is your own challenge.","err");const {data:u,error:e}=await sb.from("chess_games").update({black_id:user.id,status:"active",started_at:new Date().toISOString(),updated_at:new Date().toISOString()}).eq("id",g.id).select().single();if(e)return msg("joinMsg",e.message,"err");openGame(u);};
 function startGamePolling(id){clearInterval(poller);poller=setInterval(async()=>{const {data:g}=await sb.from("chess_games").select("*").eq("id",id).maybeSingle();if(g&&g.black_id){clearInterval(poller);openGame(g);}},1400);}
 function openGame(g){game=g;chess=new Chess(g.current_fen);selected=null;lobby.classList.add("hidden");playLoggedOut.classList.add("hidden");gameArea.classList.remove("hidden");updateBoardModeButtons();renderBoard();loadMoves();clearInterval(poller);poller=setInterval(refreshGame,1400);}
-window.leaveBoard=()=>{clearInterval(poller);gameArea.classList.add("hidden");lobby.classList.toggle("hidden",!user);if(renderer3D){renderer3D.destroy();renderer3D=null}game=null;chess=null;selected=null;};
-async function refreshGame(){if(!game)return;const {data:g}=await sb.from("chess_games").select("*").eq("id",game.id).maybeSingle();if(!g)return;const changed=g.current_fen!==game.current_fen||g.status!==game.status;game=g;if(changed){chess=new Chess(g.current_fen);selected=null;renderBoard();loadMoves();}}
+window.leaveBoard=()=>{clearInterval(poller);gameArea.classList.add("hidden");if(user){lobby.classList.remove("hidden");playLoggedOut.classList.add("hidden")}else{lobby.classList.add("hidden");playLoggedOut.classList.remove("hidden")}if(renderer3D){renderer3D.destroy();renderer3D=null}game=null;chess=null;selected=null;computerThinking=false;localMoves=[];};
+async function refreshGame(){if(!game||game.local)return;const {data:g}=await sb.from("chess_games").select("*").eq("id",game.id).maybeSingle();if(!g)return;const changed=g.current_fen!==game.current_fen||g.status!==game.status;game=g;if(changed){chess=new Chess(g.current_fen);selected=null;renderBoard();loadMoves();}}
 const pieceChar=p=>p?pieces[p.type]:"";
 function renderBoard(){
  if(!game||!chess)return;
- const meWhite=user.id===game.white_id,orientation=meWhite?"white":"black";
+ const meWhite=game.local?true:(user?.id===game.white_id),orientation=meWhite?"white":"black";
  const legal=selected?chess.moves({square:selected,verbose:true}).map(m=>m.to):[];
  const flat=document.getElementById("board"),three=document.getElementById("board3D"),help=document.getElementById("threeHelp");
  if(boardMode!=="2d"){
@@ -291,12 +338,37 @@ function renderBoard(){
      btn.onclick=()=>squareClick(s,p);flat.appendChild(btn);
    }
  }
- gameTitle.textContent="Challenge "+game.invite_code;
- gameMeta.textContent=(meWhite?"You are White":"You are Black")+" • "+(game.status==="waiting"?"Waiting for opponent":game.status)+" • "+(boardMode==="2d"?"Classic 2-D":boardMode==="table"?"3-D Table":"EAV Floating Arena");
- turnText.textContent=game.status==="finished"?"Game over: "+(game.result||""):((game.turn==="white"?"White":"Black")+" to move");
+ gameTitle.textContent=game.local?"You vs EAV Computer":"Challenge "+game.invite_code;
+ gameMeta.textContent=(game.local?"You are White • Solo Practice":(meWhite?"You are White":"You are Black")+" • "+(game.status==="waiting"?"Waiting for opponent":game.status))+" • "+(boardMode==="2d"?"Classic 2-D":boardMode==="table"?"3-D Table":"EAV Floating Arena");
+ turnText.textContent=game.local?localGameStatus():(game.status==="finished"?"Game over: "+(game.result||""):((game.turn==="white"?"White":"Black")+" to move"));
 }
-async function squareClick(s,p){if(game.status!=="active")return;const myColor=user.id===game.white_id?"w":"b",myTurn=(game.turn==="white"?"w":"b")===myColor;if(!myTurn)return msg("gameMsg","Waiting for your opponent.","err");if(!selected){if(p&&p.color===myColor){selected=s;renderBoard()}return;}if(s===selected){selected=null;renderBoard();return;}if(p&&p.color===myColor){selected=s;renderBoard();return;}const from=selected;selected=null;msg("gameMsg","Checking move…");const {data,error}=await sb.functions.invoke("eav-chess-move",{body:{gameId:game.id,from,to:s,promotion:"q"}});if(error||data?.error){msg("gameMsg",data?.error||error?.message||"Move rejected.","err");renderBoard();return}msg("gameMsg",data.move,"ok");await refreshGame();}
-async function loadMoves(){const {data}=await sb.from("chess_moves").select("ply,san").eq("game_id",game.id).order("ply");if(!data?.length){moveList.textContent="No moves yet.";return}let out="";for(let i=0;i<data.length;i+=2)out+=(Math.floor(i/2)+1)+". "+data[i].san+(data[i+1]?"  "+data[i+1].san:"")+"\n";moveList.textContent=out;}
+async function squareClick(s,p){
+ if(game.status!=="active")return;
+ if(game.local){
+   if(computerThinking||chess.turn()!=="w")return msg("gameMsg","Computer is thinking…");
+   if(!selected){if(p&&p.color==="w"){selected=s;renderBoard()}return}
+   if(s===selected){selected=null;renderBoard();return}
+   if(p&&p.color==="w"){selected=s;renderBoard();return}
+   const from=selected;selected=null;
+   try{const made=chess.move({from,to:s,promotion:"q"});if(!made){renderBoard();return}localMoves.push(made);game.turn=chess.turn()==="w"?"white":"black";if(chess.isGameOver()){game.status="finished";game.result=localGameStatus();renderBoard();loadMoves();return}renderBoard();loadMoves();setTimeout(makeComputerMove,180)}catch{msg("gameMsg","That move is not legal.","err");renderBoard()}return;
+ }
+ const myColor=user.id===game.white_id?"w":"b",myTurn=(game.turn==="white"?"w":"b")===myColor;
+ if(!myTurn)return msg("gameMsg","Waiting for your opponent.","err");
+ if(!selected){if(p&&p.color===myColor){selected=s;renderBoard()}return}
+ if(s===selected){selected=null;renderBoard();return}
+ if(p&&p.color===myColor){selected=s;renderBoard();return}
+ const from=selected;selected=null;msg("gameMsg","Checking move…");
+ const {data,error}=await sb.functions.invoke("eav-chess-move",{body:{gameId:game.id,from,to:s,promotion:"q"}});
+ if(error||data?.error){msg("gameMsg",data?.error||error?.message||"Move rejected.","err");renderBoard();return}
+ msg("gameMsg",data.move,"ok");await refreshGame();
+}
+async function loadMoves(){
+ let data;
+ if(game?.local){data=localMoves.map((m,i)=>({ply:i+1,san:m.san}))}
+ else{const r=await sb.from("chess_moves").select("ply,san").eq("game_id",game.id).order("ply");data=r.data||[]}
+ if(!data?.length){moveList.textContent="No moves yet.";return}
+ let out="";for(let i=0;i<data.length;i+=2)out+=(Math.floor(i/2)+1)+". "+data[i].san+(data[i+1]?"  "+data[i+1].san:"")+"\n";moveList.textContent=out;
+}
 renderThemeControls();applyTheme(currentThemeId);updateBoardModeButtons();await refreshAuth();await loadLessons();
 </script>
 </body>
