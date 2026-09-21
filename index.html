@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>EAV Chess | Play. Learn. Improve.</title>
+<meta name="description" content="EAV Chess combines multiplayer chess, structured opening lessons, game study, and training progress."/>
+<style>
+:root{--bg:#09110e;--panel:#111c17;--panel2:#17251e;--gold:#d7b45a;--cream:#f5f0df;--muted:#9fb0a6;--line:#2b3a32;--light:#e8dfc5;--dark:#54705d;--danger:#d06464;--ok:#6dc18c}
+*{box-sizing:border-box} body{margin:0;background:radial-gradient(circle at top,#163024 0,#09110e 46%);color:var(--cream);font-family:Inter,ui-sans-serif,system-ui,-apple-system,Segoe UI,sans-serif}
+button,input{font:inherit}.shell{max-width:1180px;margin:auto;padding:22px}.top{display:flex;align-items:center;gap:18px;justify-content:space-between;border-bottom:1px solid var(--line);padding-bottom:16px}.brand{display:flex;align-items:center;gap:12px}.mark{width:44px;height:44px;border:2px solid var(--gold);border-radius:12px;display:grid;place-items:center;color:var(--gold);font-size:25px}.brand b{letter-spacing:.12em}.brand small{display:block;color:var(--muted);margin-top:3px}.nav{display:flex;gap:8px;flex-wrap:wrap}.nav button,.ghost,.primary,.danger{border:1px solid var(--line);background:transparent;color:var(--cream);padding:10px 14px;border-radius:9px;cursor:pointer}.nav button.active,.primary{background:var(--gold);color:#16130b;border-color:var(--gold);font-weight:700}.danger{border-color:#7d4545;color:#f0b2b2}.hero{padding:58px 0 28px;display:grid;grid-template-columns:1.35fr .65fr;gap:26px}.hero h1{font-size:clamp(42px,7vw,84px);line-height:.9;margin:0 0 20px;letter-spacing:-.05em}.gold{color:var(--gold)}.hero p{font-size:18px;max-width:700px;color:#c9d3cc;line-height:1.65}.statgrid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.stat{background:rgba(17,28,23,.82);border:1px solid var(--line);border-radius:14px;padding:18px}.stat strong{font-size:28px;color:var(--gold);display:block}.stat span{color:var(--muted);font-size:13px}.panel{background:rgba(17,28,23,.92);border:1px solid var(--line);border-radius:16px;padding:20px}.grid2{display:grid;grid-template-columns:1fr 1fr;gap:18px}.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}.card{background:var(--panel2);border:1px solid var(--line);border-radius:13px;padding:16px}.card h3{margin:0 0 8px}.muted{color:var(--muted)}.tag{display:inline-block;padding:4px 8px;border:1px solid #435249;border-radius:999px;font-size:12px;color:#becac2;margin-right:6px}.section-title{display:flex;justify-content:space-between;align-items:end;margin:18px 0}.section-title h2{margin:0;font-size:30px}.section-title p{margin:0;color:var(--muted)}.hidden{display:none!important}.auth{max-width:460px;margin:38px auto}.stack{display:grid;gap:11px}.stack input{width:100%;background:#0c1511;color:var(--cream);border:1px solid var(--line);padding:12px;border-radius:9px}.msg{min-height:24px;color:var(--muted);font-size:14px}.ok{color:var(--ok)}.err{color:#ef9696}
+.gamewrap{display:grid;grid-template-columns:minmax(320px,650px) 1fr;gap:22px;align-items:start}.board{width:min(86vw,650px);aspect-ratio:1;display:grid;grid-template-columns:repeat(8,1fr);border:6px solid #2a332d;border-radius:6px;overflow:hidden;box-shadow:0 16px 40px #0008}.sq{border:0;border-radius:0;display:grid;place-items:center;font-size:clamp(29px,6vw,64px);line-height:1;cursor:pointer;padding:0}.sq.light{background:var(--light)}.sq.dark{background:var(--dark)}.sq.sel{outline:5px solid #d7b45acc;outline-offset:-5px}.sq.move{box-shadow:inset 0 0 0 5px #e2c66a88}.piece.white{color:#fff;text-shadow:0 2px 2px #000}.piece.black{color:#151b17;text-shadow:0 1px 0 #fff6}.moves{max-height:265px;overflow:auto;font-family:ui-monospace,monospace;background:#0b130f;padding:10px;border-radius:8px}.lesson-card{cursor:pointer;transition:.15s}.lesson-card:hover{transform:translateY(-2px);border-color:#6e7659}.bar{height:8px;background:#26342c;border-radius:999px;overflow:hidden}.bar i{display:block;height:100%;background:var(--gold)}.video{aspect-ratio:16/9;background:#0b130f;border:1px dashed #46574e;border-radius:10px;display:grid;place-items:center;color:var(--muted);text-align:center;padding:20px}.footer{margin-top:58px;border-top:1px solid var(--line);padding:22px 0;color:var(--muted);font-size:13px}
+@media(max-width:820px){.hero,.grid2,.gamewrap{grid-template-columns:1fr}.grid3{grid-template-columns:1fr}.top{align-items:flex-start;flex-direction:column}.hero{padding-top:34px}.board{width:min(94vw,650px)}}
+</style>
+</head>
+<body>
+<div class="shell">
+<header class="top">
+ <div class="brand"><div class="mark">♞</div><div><b>EAV CHESS</b><small>Play • Learn • Improve</small></div></div>
+ <nav class="nav">
+  <button data-view="home" class="active">Home</button><button data-view="play">Play</button><button data-view="learn">Lessons</button><button data-view="videos">Videos</button><button data-view="profile">Profile</button>
+ </nav>
+</header>
+
+<main>
+<section id="home" class="view">
+ <div class="hero">
+  <div><span class="tag">EAV GAME</span><span class="tag">MULTIPLAYER BETA</span><h1>Think deeper.<br><span class="gold">Play sharper.</span></h1>
+  <p>EAV Chess combines head-to-head play with a structured chess classroom. Learn opening principles, study major opening families, review master-vs-amateur decision patterns, then put the ideas into real games.</p>
+  <div style="display:flex;gap:10px;flex-wrap:wrap"><button class="primary" onclick="go('play')">Play a Game</button><button class="ghost" onclick="go('learn')">Start Learning</button></div></div>
+  <div class="statgrid"><div class="stat"><strong id="lessonCount">22</strong><span>Lesson tracks</span></div><div class="stat"><strong>1v1</strong><span>Online challenges</span></div><div class="stat"><strong>1200</strong><span>Starting rating</span></div><div class="stat"><strong>24/7</strong><span>Self-paced study</span></div></div>
+ </div>
+ <div class="grid3"><div class="card"><h3>♟ Play</h3><p class="muted">Create a private challenge code or join a friend. Moves are checked on the server.</p></div><div class="card"><h3>♜ Learn</h3><p class="muted">Opening principles, gambits, open games, semi-open systems, closed structures, flank openings, and practical study.</p></div><div class="card"><h3>♛ Improve</h3><p class="muted">Track completed lessons and build a repeatable study habit around your own games.</p></div></div>
+</section>
+
+<section id="play" class="view hidden">
+ <div class="section-title"><div><h2>Play Chess</h2><p>Create or join a head-to-head game.</p></div></div>
+ <div id="playLoggedOut" class="panel"><h3>Sign in to play</h3><p class="muted">Player accounts are required for multiplayer games and progress tracking.</p><button class="primary" onclick="go('profile')">Sign In / Create Account</button></div>
+ <div id="lobby" class="grid2 hidden">
+  <div class="panel"><h3>Create a Challenge</h3><p class="muted">You play White. Share the invite code with your opponent.</p><button class="primary" onclick="createGame()">Create Game</button><div id="createdCode" style="margin-top:14px"></div></div>
+  <div class="panel"><h3>Join a Challenge</h3><div class="stack"><input id="joinCode" placeholder="Invite code"/><button class="primary" onclick="joinGame()">Join Game</button></div><div id="joinMsg" class="msg"></div></div>
+ </div>
+ <div id="gameArea" class="gamewrap hidden" style="margin-top:20px">
+  <div><div id="board" class="board"></div></div>
+  <aside class="panel"><h3 id="gameTitle">EAV Match</h3><div id="gameMeta" class="muted"></div><p id="turnText"></p><div id="gameMsg" class="msg"></div><h4>Move History</h4><div id="moveList" class="moves">No moves yet.</div><div style="margin-top:12px"><button class="ghost" onclick="leaveBoard()">Back to Lobby</button></div></aside>
+ </div>
+</section>
+
+<section id="learn" class="view hidden">
+ <div class="section-title"><div><h2>Chess Academy</h2><p>Original EAV lessons organized from your selected chess subject areas.</p></div></div>
+ <div id="progressBox" class="panel hidden" style="margin-bottom:16px"><div style="display:flex;justify-content:space-between"><b>Your Progress</b><span id="progressText"></span></div><div class="bar" style="margin-top:10px"><i id="progressBar" style="width:0"></i></div></div>
+ <div id="lessons" class="grid3"></div>
+ <div id="lessonDetail" class="panel hidden" style="margin-top:18px"></div>
+</section>
+
+<section id="videos" class="view hidden">
+ <div class="section-title"><div><h2>Chess Video Room</h2><p>Video lessons can be attached to any lesson track.</p></div></div>
+ <div id="videoGrid" class="grid3"></div>
+</section>
+
+<section id="profile" class="view hidden">
+ <div id="authBox" class="panel auth">
+  <h2>Player Account</h2><p class="muted">Use one account for games, lesson progress, and future rankings.</p>
+  <div class="stack"><input id="displayName" placeholder="Display name"/><input id="email" type="email" placeholder="Email"/><input id="password" type="password" placeholder="Password (6+ characters)"/>
+  <div style="display:flex;gap:8px"><button class="primary" onclick="signIn()">Sign In</button><button class="ghost" onclick="signUp()">Create Account</button></div><div id="authMsg" class="msg"></div></div>
+ </div>
+ <div id="profileBox" class="panel hidden"><div class="section-title"><div><h2 id="profileName">Player</h2><p id="profileEmail"></p></div><button class="danger" onclick="signOut()">Sign Out</button></div>
+ <div class="statgrid"><div class="stat"><strong id="rating">1200</strong><span>Rating</span></div><div class="stat"><strong id="completed">0</strong><span>Lessons completed</span></div><div class="stat"><strong id="wins">0</strong><span>Wins</span></div><div class="stat"><strong id="record">0-0-0</strong><span>W-L-D</span></div></div></div>
+</section>
+</main>
+<footer class="footer">© 2026 Elite Avatars • EAV Chess Beta • Educational content is original EAV curriculum informed by chess topics and standard opening theory.</footer>
+</div>
+<script type="module">
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.4";
+import { Chess } from "https://esm.sh/chess.js@1.4.0";
+
+const sb = createClient("https://nkwpiomisohzvomcshrq.supabase.co","sb_publishable_7hDgGTzFhC2msWXF_c9Cfg_hLXMkz6n");
+let user=null, profile=null, lessons=[], progress=[], game=null, chess=null, selected=null, poller=null;
+const pieces={p:"♟",r:"♜",n:"♞",b:"♝",q:"♛",k:"♚"};
+
+window.go=(id)=>{document.querySelectorAll(".view").forEach(v=>v.classList.add("hidden"));document.getElementById(id).classList.remove("hidden");document.querySelectorAll(".nav button").forEach(b=>b.classList.toggle("active",b.dataset.view===id));if(id==="learn") loadLessons();if(id==="videos") loadVideos();};
+document.querySelectorAll(".nav button").forEach(b=>b.onclick=()=>go(b.dataset.view));
+
+function msg(id,text,kind=""){const el=document.getElementById(id);el.textContent=text;el.className="msg "+kind;}
+async function refreshAuth(){const {data:{user:u}}=await sb.auth.getUser();user=u;if(user) await ensureProfile();renderAuth();}
+async function ensureProfile(){let {data:p}=await sb.from("chess_profiles").select("*").eq("user_id",user.id).maybeSingle();if(!p){const name=(user.user_metadata?.display_name||user.email?.split("@")[0]||"Player").slice(0,40);const {data:n}=await sb.from("chess_profiles").insert({user_id:user.id,display_name:name}).select().single();p=n;}profile=p;await loadProgress();}
+function renderAuth(){
+ document.getElementById("playLoggedOut").classList.toggle("hidden",!!user);document.getElementById("lobby").classList.toggle("hidden",!user);
+ document.getElementById("authBox").classList.toggle("hidden",!!user);document.getElementById("profileBox").classList.toggle("hidden",!user);
+ if(user&&profile){profileName.textContent=profile.display_name;profileEmail.textContent=user.email||"";rating.textContent=profile.rating;completed.textContent=progress.filter(x=>x.status==="completed").length;wins.textContent=profile.wins;record.textContent=profile.wins+"-"+profile.losses+"-"+profile.draws;}
+}
+window.signUp=async()=>{const name=displayName.value.trim(),em=email.value.trim(),pw=password.value;if(!name||!em||pw.length<6)return msg("authMsg","Enter a display name, email, and password of at least 6 characters.","err");const {data,error}=await sb.auth.signUp({email:em,password:pw,options:{data:{display_name:name}}});if(error)return msg("authMsg",error.message,"err");msg("authMsg",data.session?"Account created.":"Account created. Check your email if confirmation is required.","ok");await refreshAuth();};
+window.signIn=async()=>{const {error}=await sb.auth.signInWithPassword({email:email.value.trim(),password:password.value});if(error)return msg("authMsg",error.message,"err");msg("authMsg","Signed in.","ok");await refreshAuth();};
+window.signOut=async()=>{await sb.auth.signOut();user=null;profile=null;progress=[];renderAuth();};
+sb.auth.onAuthStateChange(()=>setTimeout(refreshAuth,0));
+
+async function loadLessons(){const {data}=await sb.from("chess_lessons").select("*").order("sort_order");lessons=data||[];lessonCount.textContent=lessons.length;lessonsEl.innerHTML="";lessons.forEach(l=>{const done=progress.some(p=>p.lesson_id===l.id&&p.status==="completed");const d=document.createElement("div");d.className="card lesson-card";d.innerHTML='<span class="tag">'+l.level+'</span><span class="tag">'+l.module+'</span><h3 style="margin-top:10px">'+l.title+'</h3><p class="muted">'+l.summary+'</p><b class="'+(done?"ok":"muted")+'">'+(done?"✓ Completed":"Open Lesson →")+'</b>';d.onclick=()=>openLesson(l);lessonsEl.appendChild(d);});renderProgress();}
+const lessonsEl=document.getElementById("lessons");
+async function loadProgress(){if(!user)return;const {data}=await sb.from("chess_lesson_progress").select("*").eq("user_id",user.id);progress=data||[];renderProgress();}
+function renderProgress(){if(!user){progressBox.classList.add("hidden");return}progressBox.classList.remove("hidden");const n=progress.filter(x=>x.status==="completed").length,total=lessons.length||22;progressText.textContent=n+" / "+total+" completed";progressBar.style.width=((n/total)*100)+"%";}
+function openLesson(l){lessonDetail.classList.remove("hidden");const objs=(l.objectives||[]).map(x=>"<li>"+x+"</li>").join("");lessonDetail.innerHTML='<span class="tag">'+l.level+'</span><span class="tag">'+l.module+'</span><h2>'+l.title+'</h2><p class="muted">'+l.summary+'</p><h4>Training objectives</h4><ul>'+objs+'</ul>'+(l.opening_family?'<p><b>Opening family:</b> '+l.opening_family+'</p>':'')+'<p class="muted">Lesson exercises, diagrams, quizzes, and EAV videos will be expanded inside this track without reproducing source-book text.</p>'+(user?'<button id="completeBtn" class="primary">Mark Lesson Complete</button>':'<p class="muted">Sign in to save progress.</p>');if(user)document.getElementById("completeBtn").onclick=()=>completeLesson(l.id);lessonDetail.scrollIntoView({behavior:"smooth"});}
+async function completeLesson(id){await sb.from("chess_lesson_progress").upsert({user_id:user.id,lesson_id:id,status:"completed",score:100,completed_at:new Date().toISOString(),updated_at:new Date().toISOString()});await loadProgress();await loadLessons();if(profile){profile.lessons_completed=progress.filter(x=>x.status==="completed").length;await sb.from("chess_profiles").update({lessons_completed:profile.lessons_completed,updated_at:new Date().toISOString()}).eq("user_id",user.id);} }
+async function loadVideos(){const {data}=await sb.from("chess_videos").select("*,chess_lessons(title)").order("sort_order");videoGrid.innerHTML="";if(!data?.length){["Opening Principles","Understanding Gambits","Ruy Lopez Plans","Sicilian Defense Map","Queen’s Gambit Structures","Master vs Amateur Thinking"].forEach(t=>{const d=document.createElement("div");d.className="card";d.innerHTML='<div class="video">EAV VIDEO<br><small>'+t+'<br>Video slot ready</small></div><h3>'+t+'</h3><p class="muted">Upload or link an EAV lesson video here.</p>';videoGrid.appendChild(d)});return;}data.forEach(v=>{const d=document.createElement("div");d.className="card";d.innerHTML=v.video_url?'<div class="video"><a style="color:var(--gold)" target="_blank" href="'+v.video_url+'">Watch Video</a></div>':'<div class="video">Video coming soon</div>';d.innerHTML+='<h3>'+v.title+'</h3><p class="muted">'+(v.description||"")+'</p>';videoGrid.appendChild(d)});}
+window.createGame=async()=>{const {data,error}=await sb.from("chess_games").insert({white_id:user.id}).select().single();if(error)return createdCode.textContent=error.message;game=data;createdCode.innerHTML='<div class="card"><span class="muted">Invite code</span><div style="font-size:32px;font-weight:800;color:var(--gold);letter-spacing:.15em">'+game.invite_code+'</div><small>Waiting for opponent…</small></div>';startGamePolling(game.id);};
+window.joinGame=async()=>{const code=joinCode.value.trim().toUpperCase();const {data:g,error}=await sb.from("chess_games").select("*").eq("invite_code",code).eq("status","waiting").maybeSingle();if(error||!g)return msg("joinMsg","Open challenge not found.","err");if(g.white_id===user.id)return msg("joinMsg","That is your own challenge.","err");const {data:u,error:e}=await sb.from("chess_games").update({black_id:user.id,status:"active",started_at:new Date().toISOString(),updated_at:new Date().toISOString()}).eq("id",g.id).select().single();if(e)return msg("joinMsg",e.message,"err");openGame(u);};
+function startGamePolling(id){clearInterval(poller);poller=setInterval(async()=>{const {data:g}=await sb.from("chess_games").select("*").eq("id",id).maybeSingle();if(g&&g.black_id){clearInterval(poller);openGame(g);}},1400);}
+function openGame(g){game=g;chess=new Chess(g.current_fen);selected=null;lobby.classList.add("hidden");playLoggedOut.classList.add("hidden");gameArea.classList.remove("hidden");renderBoard();loadMoves();clearInterval(poller);poller=setInterval(refreshGame,1400);}
+window.leaveBoard=()=>{clearInterval(poller);gameArea.classList.add("hidden");lobby.classList.toggle("hidden",!user);game=null;chess=null;};
+async function refreshGame(){if(!game)return;const {data:g}=await sb.from("chess_games").select("*").eq("id",game.id).maybeSingle();if(!g)return;const changed=g.current_fen!==game.current_fen||g.status!==game.status;game=g;if(changed){chess=new Chess(g.current_fen);selected=null;renderBoard();loadMoves();}}
+const pieceChar=p=>p?pieces[p.type]:"";
+function renderBoard(){if(!game||!chess)return;board.innerHTML="";const meWhite=user.id===game.white_id,orientation=meWhite?"white":"black";const ranks=orientation==="white"?[8,7,6,5,4,3,2,1]:[1,2,3,4,5,6,7,8],files=orientation==="white"?["a","b","c","d","e","f","g","h"]:["h","g","f","e","d","c","b","a"];const legal=selected?chess.moves({square:selected,verbose:true}).map(m=>m.to):[];for(const r of ranks)for(const f of files){const s=f+r,p=chess.get(s),btn=document.createElement("button");btn.className="sq "+(((files.indexOf(f)+r)%2)?"light":"dark")+(selected===s?" sel":"")+(legal.includes(s)?" move":"");if(p)btn.innerHTML='<span class="piece '+(p.color==="w"?"white":"black")+'">'+pieceChar(p)+'</span>';btn.onclick=()=>squareClick(s,p);board.appendChild(btn)}gameTitle.textContent="Challenge "+game.invite_code;gameMeta.textContent=(meWhite?"You are White":"You are Black")+" • "+(game.status==="waiting"?"Waiting for opponent":game.status);turnText.textContent=game.status==="finished"?"Game over: "+(game.result||""):((game.turn==="white"?"White":"Black")+" to move");}
+async function squareClick(s,p){if(game.status!=="active")return;const myColor=user.id===game.white_id?"w":"b",myTurn=(game.turn==="white"?"w":"b")===myColor;if(!myTurn)return msg("gameMsg","Waiting for your opponent.","err");if(!selected){if(p&&p.color===myColor){selected=s;renderBoard()}return;}if(s===selected){selected=null;renderBoard();return;}if(p&&p.color===myColor){selected=s;renderBoard();return;}const from=selected;selected=null;msg("gameMsg","Checking move…");const {data,error}=await sb.functions.invoke("eav-chess-move",{body:{gameId:game.id,from,to:s,promotion:"q"}});if(error||data?.error){msg("gameMsg",data?.error||error?.message||"Move rejected.","err");renderBoard();return}msg("gameMsg",data.move,"ok");await refreshGame();}
+async function loadMoves(){const {data}=await sb.from("chess_moves").select("ply,san").eq("game_id",game.id).order("ply");if(!data?.length){moveList.textContent="No moves yet.";return}let out="";for(let i=0;i<data.length;i+=2)out+=(Math.floor(i/2)+1)+". "+data[i].san+(data[i+1]?"  "+data[i+1].san:"")+"\n";moveList.textContent=out;}
+await refreshAuth();await loadLessons();
+</script>
+</body>
+</html>
