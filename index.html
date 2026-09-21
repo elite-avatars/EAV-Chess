@@ -47,15 +47,15 @@ button,input{font:inherit}.shell{max-width:1180px;margin:auto;padding:22px}.top{
   <div style="display:flex;gap:10px;flex-wrap:wrap"><button class="primary" onclick="go('play')">Play a Game</button><button class="ghost" onclick="go('learn')">Start Learning</button></div></div>
   <div class="statgrid"><div class="stat"><strong id="lessonCount">22</strong><span>Lesson tracks</span></div><div class="stat"><strong>1v1</strong><span>Online challenges</span></div><div class="stat"><strong>1200</strong><span>Starting rating</span></div><div class="stat"><strong>24/7</strong><span>Self-paced study</span></div></div>
  </div>
- <div class="grid3"><div class="card"><h3>♟ Play</h3><p class="muted">Create a private challenge code or join a friend. Moves are checked on the server.</p></div><div class="card"><h3>♜ Learn</h3><p class="muted">Opening principles, gambits, open games, semi-open systems, closed structures, flank openings, and practical study.</p></div><div class="card"><h3>♛ Improve</h3><p class="muted">Track completed lessons and build a repeatable study habit around your own games.</p></div></div>
+ <div class="grid3"><div class="card"><h3>♟ Play</h3><p class="muted">Play a friend using a private game code. One friend can join each code, and moves are checked on the server.</p></div><div class="card"><h3>♜ Learn</h3><p class="muted">Opening principles, gambits, open games, semi-open systems, closed structures, flank openings, and practical study.</p></div><div class="card"><h3>♛ Improve</h3><p class="muted">Track completed lessons and build a repeatable study habit around your own games.</p></div></div>
 </section>
 
 <section id="play" class="view hidden">
- <div class="section-title"><div><h2>Play Chess</h2><p>Create or join a head-to-head game.</p></div></div>
+ <div class="section-title"><div><h2>Play Chess</h2><p>Play a private head-to-head game with one friend.</p></div></div>
  <div id="playLoggedOut" class="panel"><h3>Sign in to play</h3><p class="muted">Player accounts are required for multiplayer games and progress tracking.</p><button class="primary" onclick="go('profile')">Sign In / Create Account</button></div>
  <div id="lobby" class="grid2 hidden">
-  <div class="panel"><h3>Create a Challenge</h3><p class="muted">You play White. Share the invite code with your opponent.</p><button class="primary" onclick="createGame()">Create Game</button><div id="createdCode" style="margin-top:14px"></div></div>
-  <div class="panel"><h3>Join a Challenge</h3><div class="stack"><input id="joinCode" placeholder="Invite code"/><button class="primary" onclick="joinGame()">Join Game</button></div><div id="joinMsg" class="msg"></div></div>
+  <div class="panel"><h3>Play a Friend</h3><p class="muted">Start a private 1-on-1 game. EAV Chess will create a private code that one friend can use to join your game.</p><button class="primary" onclick="createGame()">Create Private Code</button><div id="createdCode" style="margin-top:14px"></div></div>
+  <div class="panel"><h3>Join a Friend</h3><p class="muted">Enter the private code your friend sent you. Each code is for one head-to-head game.</p><div class="stack"><input id="joinCode" placeholder="Private game code"/><button class="primary" onclick="joinGame()">Join Friend</button></div><div id="joinMsg" class="msg"></div></div>
  </div>
  <div id="gameArea" class="gamewrap hidden" style="margin-top:20px">
   <div><div id="board" class="board"></div></div>
