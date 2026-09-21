@@ -115,7 +115,7 @@ export class EAV3DRenderer{
   }
   rebuildPieces(map){
     this.pieceRoot.clear();
-    for(const [sq,p] of map){const g=pieceGeometry(p,p.color==="w"?(this.theme?.white||"#f5f0df"):(this.theme?.black||"#151b17"));g.position.copy(this.squareToPos(sq));g.userData.square=sq;g.traverse(x=>x.userData.square=sq);this.pieceRoot.add(g)}
+    for(const [sq,p] of map){const g=pieceGeometry(p,p.color==="w"?(this.theme?.white||"#f5f0df"):(this.theme?.black||"#151b17"));if(this.isMobile)g.scale.multiplyScalar(1.18);g.position.copy(this.squareToPos(sq));g.userData.square=sq;g.traverse(x=>x.userData.square=sq);this.pieceRoot.add(g)}
   }
   animateMove(move,map){
     const moving=this.pieceRoot.children.find(g=>g.userData.square===move.from);
@@ -140,7 +140,7 @@ export class EAV3DRenderer{
     c.addEventListener("pointerdown",e=>{this.drag.active=true;this.drag.x=e.clientX;this.drag.y=e.clientY;this.drag.moved=false;c.setPointerCapture?.(e.pointerId)});
     c.addEventListener("pointermove",e=>{if(!this.drag.active)return;const dx=e.clientX-this.drag.x,dy=e.clientY-this.drag.y;if(Math.abs(dx)+Math.abs(dy)>2){this.theta-=dx*(this.isMobile?.0055:.008);if(!this.isMobile)this.phi=THREE.MathUtils.clamp(this.phi-dy*.005,.38,1.25);this.drag.x=e.clientX;this.drag.y=e.clientY;this.drag.moved=true;this.setCameraOrientation()}});
     c.addEventListener("pointerup",e=>{const moved=this.drag.moved;this.drag={active:false,x:0,y:0,moved:false};if(!moved)this.pick(e)});
-    c.addEventListener("wheel",e=>{e.preventDefault();this.userAdjustedRadius=true;const min=this.isMobile?11.5:7.4,max=this.isMobile?19:15;this.radius=THREE.MathUtils.clamp(this.radius+Math.sign(e.deltaY)*.7,min,max);this.setCameraOrientation()},{passive:false});
+    c.addEventListener("wheel",e=>{e.preventDefault();this.userAdjustedRadius=true;const min=this.isMobile?10.4:7.4,max=this.isMobile?16:15;this.radius=THREE.MathUtils.clamp(this.radius+Math.sign(e.deltaY)*.7,min,max);this.setCameraOrientation()},{passive:false});
     this.ro=new ResizeObserver(()=>this.resize());this.ro.observe(this.container);
   }
   pick(e){
@@ -157,12 +157,12 @@ export class EAV3DRenderer{
     this.renderer.domElement.style.height="100%";
     this.renderer.domElement.style.display="block";
     this.camera.aspect=w/h;
-    this.camera.fov=this.isMobile?56:42;
+    this.camera.fov=this.isMobile?49:42;
     this.camera.updateProjectionMatrix();
-    this.boardRoot.scale.setScalar(this.isMobile?(this.mode==="arena"?.84:.88):1);
+    this.boardRoot.scale.setScalar(this.isMobile?(this.mode==="arena"?.94:.96):1);
     if(this.isMobile&&!this.userAdjustedRadius){
-      this.radius=this.mode==="arena"?14.8:13.8;
-      this.phi=this.mode==="arena"?.72:.78;
+      this.radius=this.mode==="arena"?11.7:11.2;
+      this.phi=this.mode==="arena"?1.02:.98;
     }else if(!this.isMobile&&!this.userAdjustedRadius){
       this.radius=10.6;this.phi=.92;
     }
