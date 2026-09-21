@@ -43,7 +43,7 @@ function pieceGeometry(piece,colorHex){
 
 export class EAV3DRenderer{
   constructor(container,{mode="table",onSquareClick=()=>{}}={}){
-    this.container=container;this.mode=mode;this.onSquareClick=onSquareClick;this.selected=null;this.legal=[];this.orientation="white";this.lastMap=new Map();this.animations=[];this.drag={active:false,x:0,y:0};this.theta=0;this.phi=.92;this.radius=10.6;
+    this.container=container;this.mode=mode;this.onSquareClick=onSquareClick;this.selected=null;this.legal=[];this.orientation="white";this.lastMap=new Map();this.animations=[];this.drag={active:false,x:0,y:0,moved:false};this.theta=0;this.phi=.92;this.radius=10.6;this.isMobile=false;this.userAdjustedRadius=false;
     this.scene=new THREE.Scene();
     this.scene.background=new THREE.Color(mode==="arena"?0x020608:0x0b0e0c);
     this.camera=new THREE.PerspectiveCamera(42,1,.1,100);
@@ -136,20 +136,41 @@ export class EAV3DRenderer{
   }
   bind(){
     const c=this.renderer.domElement;
-    c.addEventListener("pointerdown",e=>{this.drag.active=true;this.drag.x=e.clientX;this.drag.y=e.clientY;c.setPointerCapture?.(e.pointerId)});
-    c.addEventListener("pointermove",e=>{if(!this.drag.active)return;const dx=e.clientX-this.drag.x,dy=e.clientY-this.drag.y;if(Math.abs(dx)+Math.abs(dy)>2){this.theta-=dx*.008;this.phi=THREE.MathUtils.clamp(this.phi-dy*.005,.38,1.25);this.drag.x=e.clientX;this.drag.y=e.clientY;this.drag.moved=true;this.setCameraOrientation()}});
+    c.style.touchAction="pan-y";
+    c.addEventListener("pointerdown",e=>{this.drag.active=true;this.drag.x=e.clientX;this.drag.y=e.clientY;this.drag.moved=false;c.setPointerCapture?.(e.pointerId)});
+    c.addEventListener("pointermove",e=>{if(!this.drag.active)return;const dx=e.clientX-this.drag.x,dy=e.clientY-this.drag.y;if(Math.abs(dx)+Math.abs(dy)>2){this.theta-=dx*(this.isMobile?.0055:.008);if(!this.isMobile)this.phi=THREE.MathUtils.clamp(this.phi-dy*.005,.38,1.25);this.drag.x=e.clientX;this.drag.y=e.clientY;this.drag.moved=true;this.setCameraOrientation()}});
     c.addEventListener("pointerup",e=>{const moved=this.drag.moved;this.drag={active:false,x:0,y:0,moved:false};if(!moved)this.pick(e)});
-    c.addEventListener("wheel",e=>{e.preventDefault();this.radius=THREE.MathUtils.clamp(this.radius+Math.sign(e.deltaY)*.7,7.4,15);this.setCameraOrientation()},{passive:false});
+    c.addEventListener("wheel",e=>{e.preventDefault();this.userAdjustedRadius=true;const min=this.isMobile?11.5:7.4,max=this.isMobile?19:15;this.radius=THREE.MathUtils.clamp(this.radius+Math.sign(e.deltaY)*.7,min,max);this.setCameraOrientation()},{passive:false});
     this.ro=new ResizeObserver(()=>this.resize());this.ro.observe(this.container);
   }
   pick(e){
     const rect=this.renderer.domElement.getBoundingClientRect();this.pointer.x=((e.clientX-rect.left)/rect.width)*2-1;this.pointer.y=-((e.clientY-rect.top)/rect.height)*2+1;this.raycaster.setFromCamera(this.pointer,this.camera);
     const hits=this.raycaster.intersectObjects([this.pieceRoot,this.squareRoot],true);for(const h of hits){let o=h.object;while(o&&!o.userData.square)o=o.parent;if(o?.userData.square){this.onSquareClick(o.userData.square);break}}
   }
-  resize(){const w=Math.max(300,this.container.clientWidth||650),h=Math.max(360,Math.min(650,w*.82));this.renderer.setSize(w,h,false);this.camera.aspect=w/h;this.camera.updateProjectionMatrix()}
+  resize(){
+    const w=Math.max(280,this.container.clientWidth||650);
+    this.isMobile=w<560||window.matchMedia?.("(pointer: coarse)")?.matches===true;
+    const h=this.isMobile?Math.round(Math.max(300,Math.min(430,w*.92))):Math.round(Math.max(360,Math.min(650,w*.82)));
+    this.container.style.height=h+"px";
+    this.renderer.setSize(w,h,true);
+    this.renderer.domElement.style.width="100%";
+    this.renderer.domElement.style.height="100%";
+    this.renderer.domElement.style.display="block";
+    this.camera.aspect=w/h;
+    this.camera.fov=this.isMobile?56:42;
+    this.camera.updateProjectionMatrix();
+    this.boardRoot.scale.setScalar(this.isMobile?(this.mode==="arena"?.84:.88):1);
+    if(this.isMobile&&!this.userAdjustedRadius){
+      this.radius=this.mode==="arena"?14.8:13.8;
+      this.phi=this.mode==="arena"?.72:.78;
+    }else if(!this.isMobile&&!this.userAdjustedRadius){
+      this.radius=10.6;this.phi=.92;
+    }
+    this.setCameraOrientation();
+  }
   animate(){
     this.raf=requestAnimationFrame(()=>this.animate());this.animations=this.animations.filter(fn=>fn());
-    if(this.mode==="arena"){this.boardRoot.position.y=1.0+Math.sin(performance.now()*.0012)*.09;this.boardRoot.rotation.y=Math.sin(performance.now()*.00022)*.025;if(this.stars)this.stars.rotation.y+=.00018}
+    if(this.mode==="arena"){const bob=this.isMobile?.035:.09,spin=this.isMobile?.008:.025;this.boardRoot.position.y=1.0+Math.sin(performance.now()*.0012)*bob;this.boardRoot.rotation.y=Math.sin(performance.now()*.00022)*spin;if(this.stars)this.stars.rotation.y+=this.isMobile?.00008:.00018}
     this.renderer.render(this.scene,this.camera);
   }
   destroy(){cancelAnimationFrame(this.raf);this.ro?.disconnect();this.renderer.dispose();this.container.innerHTML=""}
