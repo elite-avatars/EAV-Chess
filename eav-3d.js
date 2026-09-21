@@ -134,12 +134,38 @@ export class EAV3DRenderer{
     const sign=this.orientation==="white"?1:-1;const x=Math.sin(this.theta)*this.radius, z=Math.cos(this.theta)*this.radius*sign;
     this.camera.position.set(x,Math.sin(this.phi)*this.radius*.88,z);this.camera.lookAt(0,this.mode==="arena"?1.0:.2,0);
   }
+  zoom(direction=0){
+    this.userAdjustedRadius=true;
+    const min=this.isMobile?8.9:6.8,max=this.isMobile?16:15;
+    this.radius=THREE.MathUtils.clamp(this.radius+(direction>0?-1.0:direction<0?1.0:0),min,max);
+    this.setCameraOrientation();
+    return this.radius;
+  }
+  resetZoom(){
+    this.userAdjustedRadius=false;
+    this.radius=this.isMobile?(this.mode==="arena"?11.7:11.2):10.6;
+    this.phi=this.isMobile?(this.mode==="arena"?1.02:.98):.92;
+    this.setCameraOrientation();
+    return this.radius;
+  }
   bind(){
     const c=this.renderer.domElement;
     c.style.touchAction="pan-y";
-    c.addEventListener("pointerdown",e=>{this.drag.active=true;this.drag.x=e.clientX;this.drag.y=e.clientY;this.drag.moved=false;c.setPointerCapture?.(e.pointerId)});
-    c.addEventListener("pointermove",e=>{if(!this.drag.active)return;const dx=e.clientX-this.drag.x,dy=e.clientY-this.drag.y;if(Math.abs(dx)+Math.abs(dy)>2){this.theta-=dx*(this.isMobile?.0055:.008);if(!this.isMobile)this.phi=THREE.MathUtils.clamp(this.phi-dy*.005,.38,1.25);this.drag.x=e.clientX;this.drag.y=e.clientY;this.drag.moved=true;this.setCameraOrientation()}});
-    c.addEventListener("pointerup",e=>{const moved=this.drag.moved;this.drag={active:false,x:0,y:0,moved:false};if(!moved)this.pick(e)});
+    this.activePointers=new Map();this.pinchDistance=null;
+    c.addEventListener("pointerdown",e=>{this.activePointers.set(e.pointerId,{x:e.clientX,y:e.clientY});if(this.activePointers.size===1){this.drag.active=true;this.drag.x=e.clientX;this.drag.y=e.clientY;this.drag.moved=false}c.setPointerCapture?.(e.pointerId)});
+    c.addEventListener("pointermove",e=>{
+      if(this.activePointers?.has(e.pointerId))this.activePointers.set(e.pointerId,{x:e.clientX,y:e.clientY});
+      if(this.activePointers?.size===2){
+        const pts=[...this.activePointers.values()],dist=Math.hypot(pts[0].x-pts[1].x,pts[0].y-pts[1].y);
+        if(this.pinchDistance!==null){
+          const change=dist-this.pinchDistance;if(Math.abs(change)>2){this.userAdjustedRadius=true;const min=this.isMobile?8.9:6.8,max=this.isMobile?16:15;this.radius=THREE.MathUtils.clamp(this.radius-change*.018,min,max);this.setCameraOrientation()}
+        }
+        this.pinchDistance=dist;this.drag.moved=true;return;
+      }
+      if(!this.drag.active)return;const dx=e.clientX-this.drag.x,dy=e.clientY-this.drag.y;if(Math.abs(dx)+Math.abs(dy)>2){this.theta-=dx*(this.isMobile?.0055:.008);if(!this.isMobile)this.phi=THREE.MathUtils.clamp(this.phi-dy*.005,.38,1.25);this.drag.x=e.clientX;this.drag.y=e.clientY;this.drag.moved=true;this.setCameraOrientation()}
+    });
+    const endPointer=e=>{const moved=this.drag.moved;this.activePointers?.delete(e.pointerId);if((this.activePointers?.size||0)<2)this.pinchDistance=null;if((this.activePointers?.size||0)===0){this.drag={active:false,x:0,y:0,moved:false};if(!moved)this.pick(e)}};
+    c.addEventListener("pointerup",endPointer);c.addEventListener("pointercancel",endPointer);
     c.addEventListener("wheel",e=>{e.preventDefault();this.userAdjustedRadius=true;const min=this.isMobile?10.4:7.4,max=this.isMobile?16:15;this.radius=THREE.MathUtils.clamp(this.radius+Math.sign(e.deltaY)*.7,min,max);this.setCameraOrientation()},{passive:false});
     this.ro=new ResizeObserver(()=>this.resize());this.ro.observe(this.container);
   }
