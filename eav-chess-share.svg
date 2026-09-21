@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630" role="img" aria-labelledby="title desc">
+<title id="title">EAV Chess</title>
+<desc id="desc">EAV Chess - Play. Learn. Improve.</desc>
+<rect width="1200" height="630" fill="#09110e"/>
+<circle cx="220" cy="315" r="145" fill="#111c17" stroke="#d7b45a" stroke-width="10"/>
+<text x="220" y="395" text-anchor="middle" font-size="230" font-family="Georgia,serif" fill="#d7b45a">♞</text>
+<text x="430" y="255" font-size="74" font-weight="700" font-family="Arial,Helvetica,sans-serif" fill="#f5f0df" letter-spacing="5">EAV CHESS</text>
+<text x="430" y="345" font-size="54" font-weight="700" font-family="Arial,Helvetica,sans-serif" fill="#d7b45a">Play. Learn. Improve.</text>
+<text x="430" y="415" font-size="30" font-family="Arial,Helvetica,sans-serif" fill="#9fb0a6">Multiplayer chess • Interactive lessons • XP tracking</text>
+</svg>
