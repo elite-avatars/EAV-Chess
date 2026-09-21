@@ -102,7 +102,7 @@ async function loadProgress(){if(!user)return;const {data}=await sb.from("chess_
 function renderProgress(){if(!user){progressBox.classList.add("hidden");return}progressBox.classList.remove("hidden");const n=progress.filter(x=>x.status==="completed").length,total=lessons.length||22;progressText.textContent=n+" / "+total+" completed";progressBar.style.width=((n/total)*100)+"%";}
 async function openLesson(l){
  activeLesson=l;lessonPlayer.classList.add("hidden");
- if(["opening-principles","notation-and-position-reading","choosing-an-opening","gambit-basics","italian-family","four-knights","ruy-lopez","french","caro-kann","pirc-modern"].includes(l.slug)){await startInteractiveLesson(l);return;}
+ if(["opening-principles","notation-and-position-reading","choosing-an-opening","gambit-basics","italian-family","four-knights","ruy-lopez","french","caro-kann","pirc-modern","queens-gambit"].includes(l.slug)){await startInteractiveLesson(l);return;}
  lessonDetail.classList.remove("hidden");const objs=(l.objectives||[]).map(x=>"<li>"+x+"</li>").join("");
  lessonDetail.innerHTML='<span class="tag">'+l.level+'</span><span class="tag">'+l.module+'</span><h2>'+l.title+'</h2><p class="muted">'+l.summary+'</p><h4>Training objectives</h4><ul>'+objs+'</ul>'+(l.opening_family?'<p><b>Opening family:</b> '+l.opening_family+'</p>':'')+'<p class="muted">Interactive exercises for this lesson track are coming next.</p>';
  lessonDetail.scrollIntoView({behavior:"smooth"});
