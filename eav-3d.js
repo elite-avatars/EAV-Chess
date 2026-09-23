@@ -43,7 +43,7 @@ function pieceGeometry(piece,colorHex){
 
 export class EAV3DRenderer{
   constructor(container,{mode="table",onSquareClick=()=>{}}={}){
-    this.container=container;this.mode=mode;this.onSquareClick=onSquareClick;this.selected=null;this.legal=[];this.orientation="white";this.lastMap=new Map();this.animations=[];this.drag={active:false,x:0,y:0,moved:false};this.theta=0;this.phi=.92;this.radius=10.6;this.isMobile=false;this.userAdjustedRadius=false;
+    this.container=container;this.mode=mode;this.onSquareClick=onSquareClick;this.selected=null;this.legal=[];this.orientation="white";this.lastMap=new Map();this.animations=[];this.drag={active:false,x:0,y:0,moved:false};this.theta=0;this.phi=1.04;this.radius=11.2;this.isMobile=false;this.userAdjustedRadius=false;this.isFullscreen=false;
     this.scene=new THREE.Scene();
     this.scene.background=new THREE.Color(mode==="arena"?0x020608:0x0b0e0c);
     this.camera=new THREE.PerspectiveCamera(42,1,.1,100);
@@ -59,8 +59,9 @@ export class EAV3DRenderer{
     this.bind();this.resize();this.animate();
   }
   buildEnvironment(){
-    const amb=new THREE.HemisphereLight(this.mode==="arena"?0x6ea8a5:0xffe7c2,0x050806,this.mode==="arena"?1.1:.9);this.scene.add(amb);
-    const key=new THREE.DirectionalLight(0xffffff,this.mode==="arena"?2.2:1.8);key.position.set(5,9,5);key.castShadow=true;key.shadow.mapSize.set(2048,2048);this.scene.add(key);
+    const amb=new THREE.HemisphereLight(this.mode==="arena"?0x7fa9a2:0xffe8c7,0x030504,this.mode==="arena"?1.18:1.05);this.scene.add(amb);
+    const key=new THREE.DirectionalLight(0xfff4de,this.mode==="arena"?2.35:2.15);key.position.set(4.5,10,6);key.castShadow=true;key.shadow.mapSize.set(2048,2048);this.scene.add(key);
+    const fill=new THREE.DirectionalLight(this.mode==="arena"?0x79d7c4:0xc9d7ff,this.mode==="arena"?.65:.42);fill.position.set(-5,6,-3);this.scene.add(fill);
     if(this.mode==="arena"){
       const teal=new THREE.PointLight(0x00d6c9,35,18,2);teal.position.set(-5,4,-2);this.scene.add(teal);
       const gold=new THREE.PointLight(0xd7b45a,30,16,2);gold.position.set(5,3,3);this.scene.add(gold);
@@ -132,7 +133,8 @@ export class EAV3DRenderer{
   }
   setCameraOrientation(){
     const sign=this.orientation==="white"?1:-1;const x=Math.sin(this.theta)*this.radius, z=Math.cos(this.theta)*this.radius*sign;
-    this.camera.position.set(x,Math.sin(this.phi)*this.radius*.88,z);this.camera.lookAt(0,this.mode==="arena"?1.0:.2,0);
+    const targetY=this.mode==="arena"?.78:.08;
+    this.camera.position.set(x,Math.sin(this.phi)*this.radius*.95,z);this.camera.lookAt(0,targetY,0);
   }
   zoom(direction=0){
     this.userAdjustedRadius=true;
@@ -143,8 +145,16 @@ export class EAV3DRenderer{
   }
   resetZoom(){
     this.userAdjustedRadius=false;
-    this.radius=this.isMobile?(this.mode==="arena"?11.7:11.2):10.6;
-    this.phi=this.isMobile?(this.mode==="arena"?1.02:.98):.92;
+    if(this.isFullscreen){
+      this.radius=this.mode==="arena"?10.4:9.8;
+      this.phi=this.mode==="arena"?1.12:1.08;
+    }else if(this.isMobile){
+      this.radius=this.mode==="arena"?11.7:11.2;
+      this.phi=this.mode==="arena"?1.02:.98;
+    }else{
+      this.radius=this.mode==="arena"?11.3:11.0;
+      this.phi=this.mode==="arena"?1.10:1.06;
+    }
     this.setCameraOrientation();
     return this.radius;
   }
@@ -176,21 +186,30 @@ export class EAV3DRenderer{
   resize(){
     const w=Math.max(280,this.container.clientWidth||650);
     this.isMobile=w<560||window.matchMedia?.("(pointer: coarse)")?.matches===true;
-    const h=this.isMobile?Math.round(Math.max(300,Math.min(430,w*.92))):Math.round(Math.max(360,Math.min(650,w*.82)));
+    const stage=this.container.closest(".three-stage");
+    this.isFullscreen=(document.fullscreenElement===stage)||stage?.classList.contains("expanded-mobile")||false;
+    const vh=Math.max(320,window.innerHeight||720);
+    const h=this.isFullscreen?Math.round(Math.max(360,Math.min(vh*.80,w*.78))):(this.isMobile?Math.round(Math.max(300,Math.min(430,w*.92))):Math.round(Math.max(460,Math.min(690,w*.74))));
     this.container.style.height=h+"px";
     this.renderer.setSize(w,h,true);
     this.renderer.domElement.style.width="100%";
     this.renderer.domElement.style.height="100%";
     this.renderer.domElement.style.display="block";
     this.camera.aspect=w/h;
-    this.camera.fov=this.isMobile?49:42;
+    this.camera.fov=this.isFullscreen?38:(this.isMobile?49:40);
     this.camera.updateProjectionMatrix();
-    this.boardRoot.scale.setScalar(this.isMobile?(this.mode==="arena"?.94:.96):1);
-    if(this.isMobile&&!this.userAdjustedRadius){
-      this.radius=this.mode==="arena"?11.7:11.2;
-      this.phi=this.mode==="arena"?1.02:.98;
-    }else if(!this.isMobile&&!this.userAdjustedRadius){
-      this.radius=10.6;this.phi=.92;
+    this.boardRoot.scale.setScalar(this.isFullscreen?1.04:(this.isMobile?(this.mode==="arena"?.94:.96):1));
+    if(!this.userAdjustedRadius){
+      if(this.isFullscreen){
+        this.radius=this.mode==="arena"?10.4:9.8;
+        this.phi=this.mode==="arena"?1.12:1.08;
+      }else if(this.isMobile){
+        this.radius=this.mode==="arena"?11.7:11.2;
+        this.phi=this.mode==="arena"?1.02:.98;
+      }else{
+        this.radius=this.mode==="arena"?11.3:11.0;
+        this.phi=this.mode==="arena"?1.10:1.06;
+      }
     }
     this.setCameraOrientation();
   }
